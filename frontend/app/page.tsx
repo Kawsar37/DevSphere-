@@ -1,187 +1,223 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiClient } from "@/services/api-client";
-import { SystemHealth } from "@/types/api";
-import { CheckCircle2, Server, Database, Layers, ArrowRight, ShieldCheck, Flame } from "lucide-react";
 import Link from "next/link";
+import { postsApi } from "@/services/posts.api";
+import { Post } from "@/types/api";
+import { useAuth } from "@/features/auth/AuthContext";
+import { PostCard } from "@/features/posts/PostCard";
+import {
+  Flame,
+  Clock,
+  Plus,
+  Code,
+  HelpCircle,
+  FileText,
+  Send,
+  MessageSquare,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function HomePage() {
-  const [health, setHealth] = useState<SystemHealth | null>(null);
+  const { user, isAuthenticated } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [sort, setSort] = useState<"ranked" | "latest">("ranked");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function checkHealth() {
+    async function loadFeed() {
+      setLoading(true);
+      setError(null);
       try {
-        const res = await apiClient.get<SystemHealth>("/health");
+        const res = await postsApi.getPosts({ sort });
         if (res.success && res.data) {
-          setHealth(res.data);
+          setPosts(res.data.posts);
         } else {
-          setError(res.message || "Failed to reach backend");
+          setError(res.message || "Failed to load feed.");
         }
       } catch (err: any) {
-        setError(err.message || "Error checking system health");
+        setError(err.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
     }
 
-    checkHealth();
-  }, []);
+    loadFeed();
+  }, [sort]);
 
   return (
-    <div className="py-8 max-w-5xl mx-auto flex flex-col gap-8">
-      {/* Hero Header */}
-      <div className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono bg-surface-container text-primary font-medium tracking-wide uppercase">
-            <Flame className="w-3.5 h-3.5 text-primary" /> Phase 1 Foundation Active
-          </span>
-          <span className="text-outline text-xs">•</span>
-          <span className="text-secondary text-xs">Precision Slate Minimal</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">
-          DevSphere Developer Community Platform
-        </h1>
-        <p className="text-sm sm:text-base text-secondary max-w-2xl leading-relaxed">
-          Production-minded platform for software engineers. Engineered with Next.js, Express,
-          TypeScript, and MongoDB with strict validation and consistent response envelopes.
-        </p>
-      </div>
-
-      {/* Full-Stack Health & Verification Matrix */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Next.js Frontend Status */}
-        <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase text-secondary font-medium tracking-wider">
-              Frontend Client
+    <div className="py-8 max-w-4xl mx-auto flex flex-col gap-6">
+      {/* 1. Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container text-primary font-medium tracking-wide uppercase">
+              Engineering Feed
             </span>
-            <Layers className="w-4 h-4 text-primary" />
+            <span className="text-outline text-xs">•</span>
+            <span className="text-secondary text-xs">Live updates</span>
           </div>
-          <div>
-            <div className="text-lg font-semibold text-on-surface flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Next.js 15 App Router</span>
-            </div>
-            <p className="text-xs text-secondary mt-1">
-              Tailwind CSS, Geist & JetBrains Mono typography active.
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs font-mono text-outline">
-            <span>Status</span>
-            <span className="text-emerald-600 font-semibold">ONLINE</span>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface">
+            Developer Community
+          </h1>
+          <p className="text-xs sm:text-sm text-secondary mt-1">
+            Discover ideas, ask questions, and learn from engineers building production systems.
+          </p>
         </div>
 
-        {/* Express Backend Status */}
-        <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase text-secondary font-medium tracking-wider">
-              Backend Service
-            </span>
-            <Server className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <div className="text-lg font-semibold text-on-surface flex items-center gap-2">
-              {loading ? (
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              ) : health ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-              )}
-              <span>Express + TypeScript</span>
-            </div>
-            <p className="text-xs text-secondary mt-1">
-              {loading
-                ? "Pinging /api/health..."
-                : health
-                ? `Uptime: ${Math.round(health.uptime)}s | Centralized error handler active`
-                : error || "Offline"}
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs font-mono text-outline">
-            <span>Swagger Docs</span>
-            <a
-              href="http://localhost:5000/api-docs"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary hover:underline font-semibold"
-            >
-              /api-docs ↗
-            </a>
-          </div>
-        </div>
-
-        {/* MongoDB Database Status */}
-        <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase text-secondary font-medium tracking-wider">
-              Data Store
-            </span>
-            <Database className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <div className="text-lg font-semibold text-on-surface flex items-center gap-2">
-              {loading ? (
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              ) : health?.database === "connected" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              )}
-              <span>MongoDB & Mongoose</span>
-            </div>
-            <p className="text-xs text-secondary mt-1">
-              {loading
-                ? "Connecting..."
-                : health?.database === "connected"
-                ? "State: Connected with fallback resilience"
-                : `State: ${health?.database || "Connecting..."}`}
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs font-mono text-outline">
-            <span>Database</span>
-            <span
-              className={
-                health?.database === "connected"
-                  ? "text-emerald-600 font-semibold uppercase"
-                  : "text-amber-600 font-semibold uppercase"
-              }
-            >
-              {health?.database || "CONNECTING"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Next Up: Phase 2 Banner */}
-      <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-surface-container-lowest text-primary">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-on-surface">
-              Foundation verified. Next up: Phase 2 Authentication
-            </h3>
-            <p className="text-xs text-secondary mt-0.5">
-              Secure registration, login, JWT token auth middleware, and user profiles.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="px-4 py-2 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shadow-sm"
+        {/* Segmented Filter Tabs */}
+        <div className="inline-flex p-1 bg-surface-container-low rounded-lg self-start sm:self-auto border border-outline-variant/30">
+          <button
+            onClick={() => setSort("ranked")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-mono text-xs transition-all ${
+              sort === "ranked"
+                ? "bg-surface-container-lowest text-primary font-semibold shadow-sm"
+                : "text-secondary hover:text-on-surface"
+            }`}
           >
-            <span>Proceed to Login</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Flame className="w-3.5 h-3.5" />
+            <span>Ranked</span>
+          </button>
+          <button
+            onClick={() => setSort("latest")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-mono text-xs transition-all ${
+              sort === "latest"
+                ? "bg-surface-container-lowest text-primary font-semibold shadow-sm"
+                : "text-secondary hover:text-on-surface"
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Latest</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Quick Composer Card */}
+      <div className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          {isAuthenticated && user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-9 h-9 rounded-full object-cover border border-outline-variant/40 shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-xs font-semibold shrink-0">
+              {user ? user.name.charAt(0).toUpperCase() : "D"}
+            </div>
+          )}
+
+          <Link
+            href="/posts/new"
+            className="flex-1 bg-surface hover:bg-surface-container-low rounded-lg px-3.5 py-2 border border-outline-variant/40 flex items-center justify-between text-secondary hover:text-on-surface transition-colors group cursor-pointer"
+          >
+            <span className="text-xs sm:text-sm text-secondary group-hover:text-on-surface">
+              Share what you&apos;re building, debugging, or learning...
+            </span>
+            <kbd className="hidden md:inline-block font-mono text-[11px] bg-surface-container-lowest text-outline px-1.5 py-0.5 rounded border border-outline-variant/40 shadow-sm">
+              Press C
+            </kbd>
+          </Link>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20 flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Link
+              href="/posts/new"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low hover:bg-surface-container text-on-surface font-mono text-xs transition-colors"
+            >
+              <Code className="w-3.5 h-3.5 text-primary" />
+              <span>Code snippet</span>
+            </Link>
+            <Link
+              href="/posts/new"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low hover:bg-surface-container text-on-surface font-mono text-xs transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-tertiary" />
+              <span>Ask Question</span>
+            </Link>
+            <Link
+              href="/posts/new"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-low hover:bg-surface-container text-on-surface font-mono text-xs transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5 text-secondary" />
+              <span>Write Article</span>
+            </Link>
+          </div>
+
+          <Link
+            href="/posts/new"
+            className="h-7 px-3 bg-primary hover:bg-primary-hover text-on-primary text-xs font-semibold rounded-md flex items-center gap-1 transition-colors shadow-sm"
+          >
+            <span>Post</span>
+            <Send className="w-3 h-3" />
           </Link>
         </div>
       </div>
+
+      {/* 3. Feed Cards List */}
+      {loading ? (
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-sm animate-pulse flex flex-col gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-surface-container" />
+                <div className="flex flex-col gap-1.5">
+                  <div className="h-3 w-32 bg-surface-container rounded" />
+                  <div className="h-2.5 w-24 bg-surface-container rounded" />
+                </div>
+              </div>
+              <div className="h-5 w-3/4 bg-surface-container rounded mt-2" />
+              <div className="h-4 w-full bg-surface-container rounded" />
+              <div className="h-4 w-2/3 bg-surface-container rounded" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/40 text-center flex flex-col items-center gap-3">
+          <AlertCircle className="w-6 h-6 text-error" />
+          <h3 className="text-sm font-semibold text-on-surface">Couldn&apos;t load posts</h3>
+          <p className="text-xs text-secondary">{error}</p>
+          <button
+            onClick={() => setSort(sort)}
+            className="px-3.5 py-1.5 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-surface-container-lowest p-12 rounded-xl border border-outline-variant/40 text-center flex flex-col items-center gap-3 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary mb-1">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-semibold text-on-surface">No posts yet</h3>
+          <p className="text-xs text-secondary max-w-sm">
+            Be the first to share an architecture decision, technical query, or engineering article!
+          </p>
+          <Link
+            href="/posts/new"
+            className="mt-2 px-4 py-2 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create First Post</span>
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {posts.map((post, idx) => (
+            <PostCard
+              key={post._id}
+              post={post}
+              rankIndex={sort === "ranked" ? idx : undefined}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

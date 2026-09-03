@@ -4,6 +4,7 @@ import { ENV } from "./config/env.js";
 import healthRouter from "./routes/health.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import developerRouter from "./routes/developer.routes.js";
+import postRouter from "./routes/post.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { setupSwagger } from "./docs/swagger.js";
 import { sendError } from "./utils/response.js";
@@ -27,6 +28,7 @@ setupSwagger(app);
 app.use("/api", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/developers", developerRouter);
+app.use("/api/posts", postRouter);
 
 // Root route redirect/info
 app.get("/", (req, res) => {

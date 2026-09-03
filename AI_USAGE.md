@@ -60,6 +60,27 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Implemented `/profile/edit` page with live skill tag addition/removal, experience entry creation/deletion, and `AuthContext` state synchronization.
   * Verified complete frontend production build.
 
+### Step 5: Untracking Secrets from Git
+* **Tasks Executed**:
+  * Executed `git rm --cached` on `.gitignore` and `.env.example` templates per user instruction.
+  * Added ignore rules to `.git/info/exclude` to protect local environment files.
+  * Committed and pushed immediate cleanup commit to GitHub remote `origin/main`.
+
+### Step 6: Phase 4 (Posts & Ranked Feed)
+* **Tasks Executed**:
+  * Built `Post` Mongoose model with engagement counters, author virtual populate, and authoritative backend ranking formula: `score = (likes - dislikes) + (commentCount * 2)`.
+  * Implemented Zod validation schemas for post publishing (`createPostSchema`) and query sorting (`getPostsQuerySchema`).
+  * Built `PostService` handling post creation, pagination, and sorting strategies: `sort=ranked` (rankScore desc, createdAt desc) and `sort=latest` (createdAt desc).
+  * Built `PostController` and endpoints: `POST /api/posts`, `GET /api/posts`, `GET /api/posts/:id`.
+  * Documented post routes in OpenAPI / Swagger specification.
+  * Verified post creation, feed ranking, and single post retrieval against live database.
+  * Built frontend `posts.api.ts` client.
+  * Built `PostCard` component replicating Stitch design with author tags, rank fire badge (`Rank #X • Score Y`), preview excerpt, tag chips, and interaction buttons.
+  * Built `/posts/new` post creation page with tag chip selector, markdown body editor, and validation.
+  * Built `/posts/[id]` post detail page with breadcrumbs, author metadata, and formatted technical body.
+  * Updated `HomePage` (`/`) with segmented Ranked vs Latest filter tabs, Quick Composer card, loading skeletons, and real backend feed integration.
+  * Validated full Next.js production build across all 8 routes.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User
@@ -68,6 +89,7 @@ This document provides a transparent, chronological record of the agentic AI wor
 3. **Resilient Local Database Strategy**: Integrated `mongodb-memory-server` as a development fallback so that the backend starts immediately even if the developer's local MongoDB service is offline, while honoring `MONGODB_URI` when provided.
 4. **Session Persistence**: Stored auth tokens securely in client-side storage, with transparent verification against `GET /api/auth/me` on application boot.
 5. **Database Isolation**: Set explicit `dbName: "devsphere"` to isolate application collections from colliding with other tables on shared Atlas clusters.
+6. **Authoritative Post Ranking**: Exclusively calculated on the backend (`(likes - dislikes) + (commentCount * 2)`) with tie-break on `createdAt` descending, ensuring zero client-side ranking drift.
 
 ---
 
