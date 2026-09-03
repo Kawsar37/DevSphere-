@@ -144,8 +144,20 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    // Don't trigger full card navigation if the click originated from an interactive element (button, link, input)
+    if (target.closest("button") || target.closest("a") || target.closest("input")) {
+      return;
+    }
+    router.push(`/posts/${post._id}`);
+  };
+
   return (
-    <article className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/40 shadow-sm hover:shadow-md transition-shadow relative flex flex-col gap-4">
+    <article
+      onClick={handleCardClick}
+      className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/40 shadow-sm hover:shadow-md hover:border-primary/40 transition-all relative flex flex-col gap-4 cursor-pointer group/card"
+    >
       {/* Top Author & Rank Metadata */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -203,11 +215,9 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
 
       {/* Post Content Preview */}
       <div>
-        <Link href={`/posts/${post._id}`}>
-          <h2 className="text-lg font-semibold text-on-surface hover:text-primary transition-colors leading-snug tracking-tight">
-            {post.title}
-          </h2>
-        </Link>
+        <h2 className="text-lg font-semibold text-on-surface group-hover/card:text-primary transition-colors leading-snug tracking-tight">
+          {post.title}
+        </h2>
         <p className="text-sm text-secondary mt-1.5 line-clamp-2 leading-relaxed">
           {post.body.replace(/[#*`_]/g, "")}
         </p>
