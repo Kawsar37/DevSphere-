@@ -168,6 +168,9 @@ npm install
 # JWT_SECRET=your_super_secret_jwt_key
 # CORS_ORIGIN=http://localhost:3000
 
+# Optional: Populate realistic developer profiles, engineering articles, and threaded comments
+npm run seed
+
 # Build and start
 npm run build
 npm start
@@ -175,6 +178,10 @@ npm start
 * Backend API: `http://localhost:5000`
 * Swagger UI: `http://localhost:5000/api-docs`
 * Health check: `http://localhost:5000/api/health`
+* Seed Accounts (Password for all: `DevSphere2026!`):
+  * `elena@prisma.io` (Staff Software Engineer @ Prisma)
+  * `marcus@netflix.com` (Principal Systems Architect @ Netflix)
+  * `sarah@datadog.com` (Staff Frontend Architect @ Datadog)
 
 ### 3. Frontend Setup
 ```bash
