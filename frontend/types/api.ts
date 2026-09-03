@@ -78,3 +78,27 @@ export interface CommentNode {
   };
   replies: CommentNode[];
 }
+
+export interface NotificationItem {
+  _id: string;
+  recipientId: string;
+  senderId: string;
+  type: "comment_on_post" | "reply_to_comment" | "reaction_on_post" | "reaction_on_comment";
+  postId: string;
+  commentId?: string | null;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  sender?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
+  post?: {
+    _id: string;
+    title: string;
+  };
+}

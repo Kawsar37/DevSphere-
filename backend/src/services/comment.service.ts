@@ -5,6 +5,7 @@ import { CreateCommentInput } from "../validators/comment.validator.js";
 import { NotFoundError, BadRequestError } from "../utils/errors.js";
 
 import { reactionService } from "./reaction.service.js";
+import { notificationService } from "./notification.service.js";
 
 export interface CommentNode {
   _id: string;
@@ -139,6 +140,33 @@ export class CommentService {
     await post.save();
 
     await comment.populate("author", "name email avatarUrl bio");
+
+    // Dispatch notifications asynchronously
+    if (parentId && parentCommentId) {
+      const parent = await Comment.findById(parentCommentId);
+      if (parent) {
+        notificationService.createNotification({
+          recipientId: parent.authorId,
+          senderId: authorId,
+          type: "reply_to_comment",
+          postId: post._id,
+          commentId: comment._id,
+          title: "New reply to your comment",
+          body: input.body.slice(0, 120),
+        }).catch(err => console.error("[Notification] Error creating reply notification:", err));
+      }
+    } else {
+      notificationService.createNotification({
+        recipientId: post.authorId,
+        senderId: authorId,
+        type: "comment_on_post",
+        postId: post._id,
+        commentId: comment._id,
+        title: "New comment on your post",
+        body: input.body.slice(0, 120),
+      }).catch(err => console.error("[Notification] Error creating comment notification:", err));
+    }
+
     return comment;
   }
 }

@@ -98,6 +98,12 @@ $$\text{score} = (\text{likes} - \text{dislikes}) + (\text{commentCount} \times 
   * **Remove**: If clicking active reaction again $\rightarrow$ deletes reaction, decrements counter, resets state.
 * **Optimistic UI**: Immediate client-side counter updates with automatic rollback on network failure.
 
+### 7. Notification System & Activity Inbox
+* **Event-Driven Dispatch**: Automatically notifies post authors when new comments are published and comment authors when replies are posted.
+* **Self-Action Suppression**: Automatically filters out notifications triggered by the user themselves.
+* **Interactive Header Bell**: Displays dynamic unread badge count with a quick-access popover dropdown showing recent activity, sender avatars, and post shortcuts.
+* **Dedicated Inbox (`/notifications`)**: Full-screen notification center with "All" vs "Unread" filters, single mark-as-read, and bulk "Mark all read" capabilities.
+
 ---
 
 ## 3. API Reference
@@ -121,6 +127,9 @@ Interactive Swagger documentation is available at:
 | `POST` | `/api/posts/:postId/comments` | Add root-level comment to a post | **Yes** |
 | `POST` | `/api/comments/:commentId/replies` | Add nested reply to an existing comment | **Yes** |
 | `POST` | `/api/comments/:id/reactions` | Toggle upvote/downvote on a comment | **Yes** |
+| `GET` | `/api/notifications` | Get paginated user notifications with unreadCount | **Yes** |
+| `PATCH` | `/api/notifications/:id/read` | Mark a single notification as read | **Yes** |
+| `PATCH` | `/api/notifications/read-all` | Mark all user notifications as read | **Yes** |
 
 ### Standard Response Envelope
 All API endpoints return a standardized envelope:

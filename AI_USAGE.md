@@ -125,6 +125,19 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Authored comprehensive production `README.md` with system architecture mermaid diagrams, quickstart guide, API reference table, and ranking formula breakdown.
   * Finalized `AI_USAGE.md` audit log for the internship evaluation.
 
+### Step 10: Notification System
+* **Tasks Executed**:
+  * Built `Notification` Mongoose model with recipient, sender, post, comment references, and compound index `{ recipientId: 1, isRead: 1, createdAt: -1 }`.
+  * Built `NotificationService` with self-action suppression (`recipientId !== senderId`), paginated retrieval, unread count tracking, and bulk/single mark-as-read.
+  * Integrated event-driven notification dispatch in `CommentService` (triggering notifications to post authors on root comments and parent comment authors on nested replies).
+  * Built `NotificationController` and endpoints: `GET /api/notifications`, `PATCH /api/notifications/:id/read`, and `PATCH /api/notifications/read-all`.
+  * Documented notification endpoints in OpenAPI / Swagger.
+  * Tested notification dispatch and mark-as-read flow in PowerShell with live multi-user simulation (Marcus commenting on Elena's post).
+  * Built frontend `notifications.api.ts` client.
+  * Updated `Header` component with real-time unread badge, popover dropdown with mark-all-read action, sender avatars, post shortcuts, and unread indicator dots.
+  * Built dedicated `/notifications` page with "All" vs "Unread" filter tabs, loading skeletons, and empty state cards matching Stitch design.
+  * Validated full Next.js production build with 9 routes compiled cleanly.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User

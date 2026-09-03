@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.routes.js";
 import developerRouter from "./routes/developer.routes.js";
 import postRouter from "./routes/post.routes.js";
 import { postCommentsRouter, commentRepliesRouter } from "./routes/comment.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { setupSwagger } from "./docs/swagger.js";
 import { sendError } from "./utils/response.js";
@@ -32,6 +33,7 @@ app.use("/api/developers", developerRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/posts", postCommentsRouter);
 app.use("/api/comments", commentRepliesRouter);
+app.use("/api/notifications", notificationRouter);
 
 // Root route redirect/info
 app.get("/", (req, res) => {
