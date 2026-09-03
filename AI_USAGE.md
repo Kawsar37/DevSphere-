@@ -111,6 +111,19 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Added interactive upvote/downvote buttons with optimistic updates and active styles across `PostCard`, `PostDetailPage`, and `CommentItem`.
   * Validated full Next.js production build across all 8 routes.
 
+### Step 9: Phase 7 (Testing Suite, Polish & Documentation)
+* **Tasks Executed**:
+  * Configured Node.js native test runner in backend (`node --import tsx --test`).
+  * Built automated test suites:
+    * `backend/tests/ranking.test.ts`: Formula accuracy, discussion weighting, and tie-breaking determinism.
+    * `backend/tests/threading.test.ts`: Recursive multi-level comment tree assembly and orphan preservation.
+    * `backend/tests/reactions.test.ts`: Add, flip, and remove reaction lifecycle with dynamic post ranking updates.
+    * `backend/tests/auth.test.ts`: Bcrypt password hashing and JWT token claims signing/verification.
+  * Executed test runner: 13 tests across 4 suites passed in 2.5s with 0 failures.
+  * Verified Swagger/OpenAPI documentation at `http://localhost:5000/api-docs` returning HTTP 200.
+  * Authored comprehensive production `README.md` with system architecture mermaid diagrams, quickstart guide, API reference table, and ranking formula breakdown.
+  * Finalized `AI_USAGE.md` audit log for the internship evaluation.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User
