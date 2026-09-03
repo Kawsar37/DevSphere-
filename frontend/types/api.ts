@@ -56,3 +56,24 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CommentNode {
+  _id: string;
+  postId: string;
+  authorId: string;
+  parentCommentId: string | null;
+  body: string;
+  likesCount: number;
+  dislikesCount: number;
+  replyCount: number;
+  createdAt: string;
+  updatedAt: string;
+  author?: {
+    _id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+    bio?: string;
+  };
+  replies: CommentNode[];
+}

@@ -81,6 +81,21 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Updated `HomePage` (`/`) with segmented Ranked vs Latest filter tabs, Quick Composer card, loading skeletons, and real backend feed integration.
   * Validated full Next.js production build across all 8 routes.
 
+### Step 7: Phase 5 (Professional Threaded Comment System)
+* **Tasks Executed**:
+  * Built `Comment` Mongoose model with `postId`, `authorId`, nullable `parentCommentId`, `likesCount`, `dislikesCount`, and `replyCount`.
+  * Implemented Zod validation (`createCommentSchema`).
+  * Built `CommentService` with recursive tree hierarchy builder (`buildTree` converting flat MongoDB documents into recursive `replies` branches).
+  * Implemented atomic `post.commentCount` incrementing and dynamic post `rankScore` recalculation on comment creation.
+  * Built `CommentController` and endpoints: `GET /api/posts/:postId/comments`, `POST /api/posts/:postId/comments`, and `POST /api/comments/:commentId/replies`.
+  * Documented comment and reply endpoints in OpenAPI / Swagger.
+  * Built frontend `comments.api.ts` service and updated API types with `CommentNode`.
+  * Built `CommentComposer` with user avatar, multi-line editor, and code block formatting hints.
+  * Built `ReplyComposer` supporting inline comment responses directly beneath target comments without page reloading.
+  * Built recursive `CommentItem` component featuring author tags (special `Author` badge for post creator), relative timestamps, vertical thread guide lines (`left-4 top-10 bottom-0 w-0.5 bg-primary/20`), and responsive nested indentation.
+  * Built `ThreadTree` and integrated it into the `/posts/[id]` page with live count synchronization.
+  * Verified complete Next.js production build with 0 errors.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User
@@ -90,6 +105,7 @@ This document provides a transparent, chronological record of the agentic AI wor
 4. **Session Persistence**: Stored auth tokens securely in client-side storage, with transparent verification against `GET /api/auth/me` on application boot.
 5. **Database Isolation**: Set explicit `dbName: "devsphere"` to isolate application collections from colliding with other tables on shared Atlas clusters.
 6. **Authoritative Post Ranking**: Exclusively calculated on the backend (`(likes - dislikes) + (commentCount * 2)`) with tie-break on `createdAt` descending, ensuring zero client-side ranking drift.
+7. **Threaded Discussion Architecture**: Stored normalized comments with `parentCommentId` in MongoDB, reconstructed into a recursive tree structure on query, and maintained atomic counter updates on the parent post.
 
 ---
 

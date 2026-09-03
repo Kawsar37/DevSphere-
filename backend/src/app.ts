@@ -5,6 +5,7 @@ import healthRouter from "./routes/health.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import developerRouter from "./routes/developer.routes.js";
 import postRouter from "./routes/post.routes.js";
+import { postCommentsRouter, commentRepliesRouter } from "./routes/comment.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { setupSwagger } from "./docs/swagger.js";
 import { sendError } from "./utils/response.js";
@@ -29,6 +30,8 @@ app.use("/api", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/developers", developerRouter);
 app.use("/api/posts", postRouter);
+app.use("/api/posts", postCommentsRouter);
+app.use("/api/comments", commentRepliesRouter);
 
 // Root route redirect/info
 app.get("/", (req, res) => {

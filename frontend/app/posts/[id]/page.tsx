@@ -4,6 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { postsApi } from "@/services/posts.api";
 import { Post } from "@/types/api";
+import { ThreadTree } from "@/features/comments/ThreadTree";
 import {
   ArrowLeft,
   Calendar,
@@ -14,7 +15,6 @@ import {
   Share2,
   MessageSquare,
   AlertCircle,
-  Code2,
 } from "lucide-react";
 
 interface PostDetailPageProps {
@@ -219,34 +219,14 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
         </div>
       </article>
 
-      {/* 3. Discussion Section (Connecting point for Phase 5) */}
-      <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-5">
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/30">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-semibold text-on-surface">Discussion</h2>
-            <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-surface-container text-primary font-medium">
-              {post.commentCount}
-            </span>
-          </div>
-          <span className="text-xs font-mono text-secondary">
-            Threaded discussion system ready
-          </span>
-        </div>
-
-        {/* Placeholder banner for Threaded Comments */}
-        <div className="p-8 text-center flex flex-col items-center gap-3 bg-surface rounded-xl border border-dashed border-outline-variant/60">
-          <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary">
-            <Code2 className="w-5 h-5" />
-          </div>
-          <h3 className="text-sm font-semibold text-on-surface">
-            Discussion thread initializes in Phase 5
-          </h3>
-          <p className="text-xs text-secondary max-w-sm leading-relaxed">
-            Multi-level hierarchical replies, vertical connector guide lines, and inline reply composers.
-          </p>
-        </div>
-      </section>
+      {/* 3. Threaded Discussion Section */}
+      <ThreadTree
+        postId={post._id}
+        postAuthorId={post.authorId}
+        onCommentCountChange={(count) => {
+          setPost((prev) => (prev ? { ...prev, commentCount: count } : null));
+        }}
+      />
     </div>
   );
 }
