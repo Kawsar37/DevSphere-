@@ -47,6 +47,19 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Built frontend auth services (`auth.api.ts`), persistent session provider (`AuthContext`), Stitch-themed `/login` and `/register` pages, and responsive `Header` user profile dropdown with sign-out.
   * Verified frontend typecheck and production build with Next.js 15.
 
+### Step 4: Phase 3 (Developer Profiles)
+* **Tasks Executed**:
+  * Created Zod validation schemas for developer updates (`updateProfileSchema`) and experience entries (`experienceSchema`).
+  * Built `DeveloperService` with `getDeveloperById`, `updateOwnProfile`, and `listDevelopers` methods.
+  * Built `DeveloperController` and routes: `GET /api/developers/:id`, `PATCH /api/developers/me`, `GET /api/developers`.
+  * Updated Swagger documentation with complete OpenAPI schemas for developer profiles.
+  * Discovered and resolved MongoDB Atlas index conflict on shared `test` database by enforcing dedicated `dbName: "devsphere"` in connection config.
+  * Verified profile update and retrieval against live MongoDB Atlas instance.
+  * Built frontend `developers.api.ts` client.
+  * Implemented `/developers/[id]` profile page matching Stitch design with avatar, bio, skills badge matrix, and vertical experience timeline.
+  * Implemented `/profile/edit` page with live skill tag addition/removal, experience entry creation/deletion, and `AuthContext` state synchronization.
+  * Verified complete frontend production build.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User
@@ -54,6 +67,7 @@ This document provides a transparent, chronological record of the agentic AI wor
 2. **Standardized Response Envelope**: Enforced uniform JSON payload structure across all endpoints to eliminate ad-hoc response parsing on the client.
 3. **Resilient Local Database Strategy**: Integrated `mongodb-memory-server` as a development fallback so that the backend starts immediately even if the developer's local MongoDB service is offline, while honoring `MONGODB_URI` when provided.
 4. **Session Persistence**: Stored auth tokens securely in client-side storage, with transparent verification against `GET /api/auth/me` on application boot.
+5. **Database Isolation**: Set explicit `dbName: "devsphere"` to isolate application collections from colliding with other tables on shared Atlas clusters.
 
 ---
 
@@ -64,3 +78,5 @@ This document provides a transparent, chronological record of the agentic AI wor
   * **Fix**: Used explicit `curl.exe` with structured JSON parsing to test endpoints reliably across environments.
 * **Issue**: Next.js detected parent directory lockfiles during production build.
   * **Fix**: Explicitly configured `outputFileTracingRoot: path.join(__dirname, "./")` in `frontend/next.config.ts`.
+* **Issue**: Pre-existing `user_email` index in shared Atlas cluster `test` database caused duplicate key error (E11000) on insertion of users with null `user_email`.
+  * **Fix**: Configured explicit `dbName: "devsphere"` in `mongoose.connect()` options, ensuring DevSphere operates on its own clean, dedicated database.

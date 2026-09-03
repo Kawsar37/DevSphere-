@@ -5,9 +5,10 @@ let memoryServer: any = null;
 
 export async function connectDB(): Promise<void> {
   try {
-    // Attempt standard connection to specified MONGODB_URI
+    // Attempt standard connection to specified MONGODB_URI with explicit devsphere dbName
     await mongoose.connect(ENV.MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000,
+      dbName: "devsphere",
+      serverSelectionTimeoutMS: 5000,
     });
     console.log(`[Database] Connected to MongoDB: ${mongoose.connection.host}/${mongoose.connection.name}`);
   } catch (error: any) {
