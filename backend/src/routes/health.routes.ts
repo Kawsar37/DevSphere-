@@ -49,4 +49,28 @@ router.get("/health", (req: Request, res: Response) => {
   }, "System operational");
 });
 
+/**
+ * @openapi
+ * /api/keep-alive:
+ *   get:
+ *     summary: Keep-alive ping route for preventing Render sleep
+ *     tags:
+ *       - System
+ *     responses:
+ *       200:
+ *         description: Ping acknowledgment
+ */
+router.get(["/keep-alive", "/temp/keep-alive"], (req: Request, res: Response) => {
+  sendSuccess(
+    res,
+    {
+      status: "alive",
+      uptimeSeconds: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      message: "Render keep-alive ping received. Service is awake.",
+    },
+    "Keep-alive ping acknowledged"
+  );
+});
+
 export default router;
