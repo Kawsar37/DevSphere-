@@ -55,4 +55,8 @@ export const postsApi = {
   async getSavedPosts(): Promise<ApiResponse<{ posts: Post[] }>> {
     return apiClient.get<{ posts: Post[] }>("/posts/saved");
   },
+
+  async deletePost(id: string): Promise<ApiResponse<null>> {
+    return apiClient.delete<null>(`/posts/${id}`);
+  },
 };

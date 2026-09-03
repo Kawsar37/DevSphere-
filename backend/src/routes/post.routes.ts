@@ -79,6 +79,7 @@ router.post("/", authenticate, postController.createPost);
 router.get("/", optionalAuth, postController.getPosts);
 router.get("/saved", authenticate, postController.getSavedPosts);
 router.post("/:id/save", authenticate, postController.toggleSavePost);
+router.delete("/:id", authenticate, postController.deletePost);
 
 /**
  * @openapi

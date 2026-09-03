@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import { Post, IPost } from "../models/Post.js";
 import { User } from "../models/User.js";
 import { CreatePostInput, GetPostsQueryInput } from "../validators/post.validator.js";
-import { NotFoundError, BadRequestError } from "../utils/errors.js";
+import { NotFoundError, BadRequestError, ForbiddenError } from "../utils/errors.js";
+import { Comment } from "../models/Comment.js";
+import { Reaction } from "../models/Reaction.js";
 
 import { reactionService } from "./reaction.service.js";
 
@@ -181,6 +183,25 @@ export class PostService {
     });
 
     return postsWithSaved;
+  }
+
+  public async deletePost(postId: string, userId: string): Promise<void> {
+    const post = await Post.findById(postId);
+    if (!post) {
+      throw new NotFoundError("Post not found.");
+    }
+
+    if (post.authorId.toString() !== userId.toString()) {
+      throw new ForbiddenError("You are not authorized to delete this post.");
+    }
+
+    await Post.findByIdAndDelete(postId);
+    await Comment.deleteMany({ postId });
+    await Reaction.deleteMany({ targetId: postId, targetType: "post" });
+    await User.updateMany(
+      { savedPostIds: postId },
+      { $pull: { savedPostIds: postId } }
+    );
   }
 }
 

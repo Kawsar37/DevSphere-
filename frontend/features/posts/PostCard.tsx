@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Post } from "@/types/api";
@@ -17,16 +17,20 @@ import {
   Check,
   MoreHorizontal,
   Eye,
+  Copy,
+  Flag,
+  Trash2,
 } from "lucide-react";
 
 interface PostCardProps {
   post: Post;
   rankIndex?: number;
+  onPostDeleted?: (postId: string) => void;
 }
 
-export function PostCard({ post, rankIndex }: PostCardProps) {
+export function PostCard({ post, rankIndex, onPostDeleted }: PostCardProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [dislikesCount, setDislikesCount] = useState(post.dislikesCount);
@@ -37,6 +41,25 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
   const [isSaved, setIsSaved] = useState<boolean>(post.isSaved || false);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close options menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOptionsMenuOpen(false);
+      }
+    };
+    if (optionsMenuOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [optionsMenuOpen]);
 
   // Format relative timestamp
   const formatTimeAgo = (dateStr: string) => {
@@ -55,6 +78,11 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
   const authorEmail = post.author?.email || "dev@devsphere.io";
   const handle = authorEmail.split("@")[0];
   const role = post.author?.bio ? post.author.bio.slice(0, 30) : "Software Engineer";
+
+  // Check if the current authenticated user is the post author
+  const isAuthor = Boolean(
+    user && (user._id === post.authorId || (user as any).id === post.authorId)
+  );
 
   const handleReaction = async (reactionType: "like" | "dislike") => {
     if (!isAuthenticated) {
@@ -144,14 +172,69 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
     }
   };
 
+  // Actions inside 3-dots menu
+  const handleMenuCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleShare();
+    setTimeout(() => setOptionsMenuOpen(false), 1200);
+  };
+
+  const handleMenuSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleToggleSave();
+    setOptionsMenuOpen(false);
+  };
+
+  const handleMenuReport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setReported(true);
+    setTimeout(() => {
+      setOptionsMenuOpen(false);
+      setReported(false);
+    }, 1500);
+  };
+
+  const handleMenuDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await postsApi.deletePost(post._id);
+      if (res.success) {
+        setIsDeleted(true);
+        if (onPostDeleted) {
+          onPostDeleted(post._id);
+        }
+      } else {
+        alert(res.message || "Failed to delete post.");
+      }
+    } catch (err: any) {
+      alert(err.message || "An error occurred while deleting the post.");
+    } finally {
+      setIsDeleting(false);
+      setOptionsMenuOpen(false);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
     const target = e.target as HTMLElement;
-    // Don't trigger full card navigation if the click originated from an interactive element (button, link, input)
-    if (target.closest("button") || target.closest("a") || target.closest("input")) {
+    // Don't trigger full card navigation if the click originated from an interactive element (button, link, input, menu)
+    if (target.closest("button") || target.closest("a") || target.closest("input") || target.closest("[role='menu']")) {
       return;
     }
     router.push(`/posts/${post._id}`);
   };
+
+  if (isDeleted) {
+    return (
+      <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30 text-xs font-mono text-secondary text-center">
+        Post has been deleted.
+      </div>
+    );
+  }
 
   return (
     <article
@@ -203,12 +286,76 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
               <span>Score {post.rankScore}</span>
             </span>
           )}
-          <button
-            aria-label="Post actions"
-            className="text-secondary hover:text-on-surface p-1 rounded hover:bg-surface-container-low transition-colors"
-          >
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
+
+          {/* Functional 3-Dots More Options Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOptionsMenuOpen((prev) => !prev);
+              }}
+              aria-label="More post options"
+              className="text-secondary hover:text-on-surface p-1.5 rounded-lg hover:bg-surface-container-low transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+
+            {optionsMenuOpen && (
+              <div
+                role="menu"
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 mt-1 w-48 bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100"
+              >
+                {/* Copy Link */}
+                <button
+                  onClick={handleMenuCopy}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-tertiary" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-secondary" />
+                  )}
+                  <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+                </button>
+
+                {/* Bookmark / Save */}
+                <button
+                  onClick={handleMenuSave}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                >
+                  <Bookmark
+                    className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-secondary"}`}
+                  />
+                  <span>{isSaved ? "Remove Bookmark" : "Save Bookmark"}</span>
+                </button>
+
+                {/* Report Post */}
+                <button
+                  onClick={handleMenuReport}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                >
+                  <Flag className="w-3.5 h-3.5 text-secondary" />
+                  <span>{reported ? "Reported to Mods" : "Report Post"}</span>
+                </button>
+
+                {/* Delete Post (Only for the Author) */}
+                {isAuthor && (
+                  <>
+                    <div className="my-1 border-t border-outline-variant/30" />
+                    <button
+                      onClick={handleMenuDelete}
+                      disabled={isDeleting}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{isDeleting ? "Deleting..." : "Delete Post"}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -55,6 +55,15 @@ export class PostController {
       next(error);
     }
   }
+
+  public async deletePost(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await postService.deletePost(req.params.id, req.user!.id);
+      sendSuccess(res, null, "Post deleted successfully", 200);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const postController = new PostController();
