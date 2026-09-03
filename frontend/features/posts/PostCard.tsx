@@ -1,8 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Post } from "@/types/api";
+import { useAuth } from "@/features/auth/AuthContext";
+import { reactionsApi } from "@/services/reactions.api";
 import {
   Flame,
   ArrowUp,
@@ -19,6 +22,16 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, rankIndex }: PostCardProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [dislikesCount, setDislikesCount] = useState(post.dislikesCount);
+  const [userReaction, setUserReaction] = useState<"like" | "dislike" | null>(
+    post.userReaction || null
+  );
+  const [isReacting, setIsReacting] = useState(false);
+
   // Format relative timestamp
   const formatTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -36,6 +49,64 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
   const authorEmail = post.author?.email || "dev@devsphere.io";
   const handle = authorEmail.split("@")[0];
   const role = post.author?.bio ? post.author.bio.slice(0, 30) : "Software Engineer";
+
+  const handleReaction = async (reactionType: "like" | "dislike") => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (isReacting) return;
+    setIsReacting(true);
+
+    // Optimistic calculation
+    const prevLikes = likesCount;
+    const prevDislikes = dislikesCount;
+    const prevReaction = userReaction;
+
+    if (prevReaction === reactionType) {
+      // Toggle OFF
+      setUserReaction(null);
+      if (reactionType === "like") setLikesCount(Math.max(0, prevLikes - 1));
+      else setDislikesCount(Math.max(0, prevDislikes - 1));
+    } else if (prevReaction) {
+      // Flip
+      setUserReaction(reactionType);
+      if (reactionType === "like") {
+        setLikesCount(prevLikes + 1);
+        setDislikesCount(Math.max(0, prevDislikes - 1));
+      } else {
+        setLikesCount(Math.max(0, prevLikes - 1));
+        setDislikesCount(prevDislikes + 1);
+      }
+    } else {
+      // New
+      setUserReaction(reactionType);
+      if (reactionType === "like") setLikesCount(prevLikes + 1);
+      else setDislikesCount(prevDislikes + 1);
+    }
+
+    try {
+      const res = await reactionsApi.reactToPost(post._id, reactionType);
+      if (res.success && res.data) {
+        setLikesCount(res.data.likesCount);
+        setDislikesCount(res.data.dislikesCount);
+        setUserReaction(res.data.userReaction);
+      } else {
+        // Rollback
+        setLikesCount(prevLikes);
+        setDislikesCount(prevDislikes);
+        setUserReaction(prevReaction);
+      }
+    } catch {
+      // Rollback
+      setLikesCount(prevLikes);
+      setDislikesCount(prevDislikes);
+      setUserReaction(prevReaction);
+    } finally {
+      setIsReacting(false);
+    }
+  };
 
   return (
     <article className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/40 shadow-sm hover:shadow-md transition-shadow relative flex flex-col gap-4">
@@ -123,23 +194,33 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
       {/* Interaction Bar */}
       <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30 text-xs">
         <div className="flex items-center gap-2">
-          {/* Upvote */}
-          <Link
-            href={`/posts/${post._id}`}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high transition-colors font-mono font-semibold"
+          {/* Upvote Button */}
+          <button
+            onClick={() => handleReaction("like")}
+            disabled={isReacting}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-xs font-semibold transition-all ${
+              userReaction === "like"
+                ? "bg-primary text-on-primary shadow-sm"
+                : "bg-surface-container text-primary hover:bg-surface-container-high"
+            }`}
           >
-            <ArrowUp className="w-3.5 h-3.5" />
-            <span>{post.likesCount}</span>
-          </Link>
+            <ArrowUp className={`w-3.5 h-3.5 ${userReaction === "like" ? "stroke-[2.5]" : ""}`} />
+            <span>{likesCount}</span>
+          </button>
 
-          {/* Downvote */}
-          <Link
-            href={`/posts/${post._id}`}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-surface-container-low text-secondary transition-colors font-mono"
+          {/* Downvote Button */}
+          <button
+            onClick={() => handleReaction("dislike")}
+            disabled={isReacting}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg font-mono text-xs transition-all ${
+              userReaction === "dislike"
+                ? "bg-rose-100 text-rose-800 font-semibold shadow-sm"
+                : "hover:bg-surface-container-low text-secondary hover:text-on-surface"
+            }`}
           >
-            <ArrowDown className="w-3.5 h-3.5" />
-            <span>{post.dislikesCount}</span>
-          </Link>
+            <ArrowDown className={`w-3.5 h-3.5 ${userReaction === "dislike" ? "stroke-[2.5]" : ""}`} />
+            <span>{dislikesCount}</span>
+          </button>
 
           <div className="h-3.5 w-px bg-outline-variant/40 mx-1" />
 

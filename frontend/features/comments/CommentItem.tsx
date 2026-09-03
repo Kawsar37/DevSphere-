@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CommentNode } from "@/types/api";
+import { useAuth } from "@/features/auth/AuthContext";
+import { reactionsApi } from "@/services/reactions.api";
 import { ReplyComposer } from "./ReplyComposer";
 import {
   ArrowUp,
   ArrowDown,
-  MessageSquare,
   CornerDownRight,
   MoreHorizontal,
 } from "lucide-react";
@@ -25,7 +27,17 @@ export function CommentItem({
   onAddReply,
   depth = 0,
 }: CommentItemProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [showReply, setShowReply] = useState(false);
+
+  // Reaction states with optimistic updates
+  const [likesCount, setLikesCount] = useState(comment.likesCount);
+  const [dislikesCount, setDislikesCount] = useState(comment.dislikesCount);
+  const [userReaction, setUserReaction] = useState<"like" | "dislike" | null>(
+    comment.userReaction || null
+  );
+  const [isReacting, setIsReacting] = useState(false);
 
   // Format relative time
   const formatTimeAgo = (dateStr: string | Date) => {
@@ -49,6 +61,71 @@ export function CommentItem({
   const handleReplySubmit = async (body: string) => {
     await onAddReply(comment._id, body);
     setShowReply(false);
+  };
+
+  const handleReaction = async (reactionType: "like" | "dislike") => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (isReacting) return;
+    setIsReacting(true);
+
+    const prevLikes = likesCount;
+    const prevDislikes = dislikesCount;
+    const prevReaction = userReaction;
+
+    let newLikes = prevLikes;
+    let newDislikes = prevDislikes;
+    let newReaction: "like" | "dislike" | null = null;
+
+    if (prevReaction === reactionType) {
+      // Toggle OFF
+      newReaction = null;
+      if (reactionType === "like") newLikes = Math.max(0, prevLikes - 1);
+      else newDislikes = Math.max(0, prevDislikes - 1);
+    } else if (prevReaction) {
+      // Flip
+      newReaction = reactionType;
+      if (reactionType === "like") {
+        newLikes = prevLikes + 1;
+        newDislikes = Math.max(0, prevDislikes - 1);
+      } else {
+        newLikes = Math.max(0, prevLikes - 1);
+        newDislikes = prevDislikes + 1;
+      }
+    } else {
+      // New
+      newReaction = reactionType;
+      if (reactionType === "like") newLikes = prevLikes + 1;
+      else newDislikes = prevDislikes + 1;
+    }
+
+    setLikesCount(newLikes);
+    setDislikesCount(newDislikes);
+    setUserReaction(newReaction);
+
+    try {
+      const res = await reactionsApi.reactToComment(comment._id, reactionType);
+      if (res.success && res.data) {
+        setLikesCount(res.data.likesCount);
+        setDislikesCount(res.data.dislikesCount);
+        setUserReaction(res.data.userReaction);
+      } else {
+        // Rollback
+        setLikesCount(prevLikes);
+        setDislikesCount(prevDislikes);
+        setUserReaction(prevReaction);
+      }
+    } catch {
+      // Rollback
+      setLikesCount(prevLikes);
+      setDislikesCount(prevDislikes);
+      setUserReaction(prevReaction);
+    } finally {
+      setIsReacting(false);
+    }
   };
 
   return (
@@ -114,18 +191,27 @@ export function CommentItem({
         <div className="flex items-center gap-3 pl-9 pt-1 text-xs font-mono text-secondary">
           <div className="flex items-center gap-1 bg-surface-container-low px-2 py-0.5 rounded text-[11px]">
             <button
+              onClick={() => handleReaction("like")}
+              disabled={isReacting}
               aria-label="Upvote comment"
-              className="hover:text-primary transition-colors flex items-center gap-0.5"
+              className={`hover:text-primary transition-colors flex items-center gap-0.5 ${
+                userReaction === "like" ? "text-primary font-bold" : ""
+              }`}
             >
-              <ArrowUp className="w-3 h-3" />
-              <span>{comment.likesCount}</span>
+              <ArrowUp className={`w-3 h-3 ${userReaction === "like" ? "stroke-[2.5]" : ""}`} />
+              <span>{likesCount}</span>
             </button>
             <span className="text-outline">/</span>
             <button
+              onClick={() => handleReaction("dislike")}
+              disabled={isReacting}
               aria-label="Downvote comment"
-              className="hover:text-error transition-colors flex items-center gap-0.5"
+              className={`hover:text-error transition-colors flex items-center gap-0.5 ${
+                userReaction === "dislike" ? "text-error font-bold" : ""
+              }`}
             >
-              <ArrowDown className="w-3 h-3" />
+              <ArrowDown className={`w-3 h-3 ${userReaction === "dislike" ? "stroke-[2.5]" : ""}`} />
+              <span>{dislikesCount}</span>
             </button>
           </div>
 

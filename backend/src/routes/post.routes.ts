@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { postController } from "../controllers/post.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { reactionController } from "../controllers/reaction.controller.js";
+import { authenticate, optionalAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -75,7 +76,7 @@ const router = Router();
  *         description: Posts feed list with pagination
  */
 router.post("/", authenticate, postController.createPost);
-router.get("/", postController.getPosts);
+router.get("/", optionalAuth, postController.getPosts);
 
 /**
  * @openapi
@@ -99,6 +100,47 @@ router.get("/", postController.getPosts);
  *       404:
  *         description: Post not found
  */
-router.get("/:id", postController.getPostById);
+router.get("/:id", optionalAuth, postController.getPostById);
+
+/**
+ * @openapi
+ * /api/posts/{id}/reactions:
+ *   post:
+ *     summary: Toggle reaction (like/dislike) on a post
+ *     tags:
+ *       - Reactions
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Post ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reactionType
+ *             properties:
+ *               reactionType:
+ *                 type: string
+ *                 enum: [like, dislike]
+ *                 example: like
+ *     responses:
+ *       200:
+ *         description: Reaction updated successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Post not found
+ */
+router.post("/:id/reactions", authenticate, reactionController.reactToPost);
 
 export default router;

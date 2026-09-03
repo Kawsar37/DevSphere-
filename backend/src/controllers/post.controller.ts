@@ -17,7 +17,7 @@ export class PostController {
   public async getPosts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = getPostsQuerySchema.parse(req.query);
-      const result = await postService.getPosts(query);
+      const result = await postService.getPosts(query, req.user?.id);
       sendSuccess(res, result, "Posts retrieved successfully", 200);
     } catch (error) {
       next(error);
@@ -26,7 +26,7 @@ export class PostController {
 
   public async getPostById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const post = await postService.getPostById(req.params.id);
+      const post = await postService.getPostById(req.params.id, req.user?.id);
       sendSuccess(res, post, "Post retrieved successfully", 200);
     } catch (error) {
       next(error);

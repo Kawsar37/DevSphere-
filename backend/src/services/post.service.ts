@@ -3,8 +3,10 @@ import { Post, IPost } from "../models/Post.js";
 import { CreatePostInput, GetPostsQueryInput } from "../validators/post.validator.js";
 import { NotFoundError, BadRequestError } from "../utils/errors.js";
 
+import { reactionService } from "./reaction.service.js";
+
 export interface PostsFeedResult {
-  posts: IPost[];
+  posts: any[];
   pagination: {
     total: number;
     page: number;
@@ -33,7 +35,7 @@ export class PostService {
     return post;
   }
 
-  public async getPosts(query: GetPostsQueryInput): Promise<PostsFeedResult> {
+  public async getPosts(query: GetPostsQueryInput, currentUserId?: string): Promise<PostsFeedResult> {
     const { sort, tag, page, limit } = query;
     const filter: Record<string, any> = {};
 
@@ -60,8 +62,23 @@ export class PostService {
       Post.countDocuments(filter),
     ]);
 
+    let userReactions: Record<string, "like" | "dislike"> = {};
+    if (currentUserId && posts.length > 0) {
+      userReactions = await reactionService.getUserReactionsMap(
+        currentUserId,
+        "post",
+        posts.map((p) => p._id.toString())
+      );
+    }
+
+    const postsWithReactions = posts.map((p) => {
+      const obj = p.toObject();
+      obj.userReaction = userReactions[p._id.toString()] || null;
+      return obj;
+    });
+
     return {
-      posts,
+      posts: postsWithReactions,
       pagination: {
         total,
         page,
@@ -71,7 +88,7 @@ export class PostService {
     };
   }
 
-  public async getPostById(id: string): Promise<IPost> {
+  public async getPostById(id: string, currentUserId?: string): Promise<any> {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestError("Invalid post ID format.");
     }
@@ -81,7 +98,15 @@ export class PostService {
       throw new NotFoundError("Post not found.");
     }
 
-    return post;
+    const obj = post.toObject();
+    if (currentUserId) {
+      const map = await reactionService.getUserReactionsMap(currentUserId, "post", [id]);
+      obj.userReaction = map[id] || null;
+    } else {
+      obj.userReaction = null;
+    }
+
+    return obj;
   }
 }
 

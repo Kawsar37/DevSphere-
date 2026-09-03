@@ -4,6 +4,8 @@ import { Post } from "../models/Post.js";
 import { CreateCommentInput } from "../validators/comment.validator.js";
 import { NotFoundError, BadRequestError } from "../utils/errors.js";
 
+import { reactionService } from "./reaction.service.js";
+
 export interface CommentNode {
   _id: string;
   postId: string;
@@ -13,6 +15,7 @@ export interface CommentNode {
   likesCount: number;
   dislikesCount: number;
   replyCount: number;
+  userReaction?: "like" | "dislike" | null;
   createdAt: Date;
   updatedAt: Date;
   author?: {
@@ -27,7 +30,8 @@ export interface CommentNode {
 
 export class CommentService {
   public async getCommentsByPostId(
-    postId: string
+    postId: string,
+    currentUserId?: string
   ): Promise<{ tree: CommentNode[]; total: number }> {
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       throw new BadRequestError("Invalid post ID format.");
@@ -36,6 +40,15 @@ export class CommentService {
     const comments = await Comment.find({ postId })
       .sort({ createdAt: 1 })
       .populate("author", "name email avatarUrl bio");
+
+    let reactionsMap: Record<string, "like" | "dislike"> = {};
+    if (currentUserId && comments.length > 0) {
+      reactionsMap = await reactionService.getUserReactionsMap(
+        currentUserId,
+        "comment",
+        comments.map((c) => c._id.toString())
+      );
+    }
 
     // Assemble flat list into nested tree hierarchy
     const map = new Map<string, CommentNode>();
@@ -52,6 +65,7 @@ export class CommentService {
         likesCount: c.likesCount,
         dislikesCount: c.dislikesCount,
         replyCount: c.replyCount,
+        userReaction: reactionsMap[c._id.toString()] || null,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
         author: (c as any).author,

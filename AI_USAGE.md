@@ -96,6 +96,21 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Built `ThreadTree` and integrated it into the `/posts/[id]` page with live count synchronization.
   * Verified complete Next.js production build with 0 errors.
 
+### Step 8: Phase 6 (Post & Comment Reactions & Dynamic Ranking)
+* **Tasks Executed**:
+  * Built `Reaction` Mongoose model with compound unique index on `{ userId: 1, targetType: 1, targetId: 1 }`.
+  * Built `ReactionService` handling full reaction lifecycle:
+    * Click same reaction $\rightarrow$ removes reaction (decrement counter).
+    * Click opposite reaction $\rightarrow$ flips reaction (decrement old, increment new).
+    * Click new reaction $\rightarrow$ adds reaction (increment counter).
+    * Automatically recalculates post `rankScore` dynamically whenever reactions change.
+    * Batch user reaction lookup to attach `userReaction: "like" | "dislike" | null` to feed posts and comments.
+  * Built `ReactionController` and mounted routes: `POST /api/posts/:id/reactions` and `POST /api/comments/:id/reactions`.
+  * Updated `GET /api/posts`, `GET /api/posts/:id`, and `GET /api/posts/:postId/comments` with `optionalAuth` to hydrate active user reaction state.
+  * Built frontend `reactions.api.ts` service.
+  * Added interactive upvote/downvote buttons with optimistic updates and active styles across `PostCard`, `PostDetailPage`, and `CommentItem`.
+  * Validated full Next.js production build across all 8 routes.
+
 ---
 
 ## 3. Key Architecture Decisions Reviewed by User
@@ -106,6 +121,7 @@ This document provides a transparent, chronological record of the agentic AI wor
 5. **Database Isolation**: Set explicit `dbName: "devsphere"` to isolate application collections from colliding with other tables on shared Atlas clusters.
 6. **Authoritative Post Ranking**: Exclusively calculated on the backend (`(likes - dislikes) + (commentCount * 2)`) with tie-break on `createdAt` descending, ensuring zero client-side ranking drift.
 7. **Threaded Discussion Architecture**: Stored normalized comments with `parentCommentId` in MongoDB, reconstructed into a recursive tree structure on query, and maintained atomic counter updates on the parent post.
+8. **Compound Unique Index for Reactions**: Enforced `{ userId: 1, targetType: 1, targetId: 1 }` in MongoDB to prevent race conditions or duplicate reactions, with deterministic toggle/flip/remove logic.
 
 ---
 

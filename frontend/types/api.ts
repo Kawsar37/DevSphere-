@@ -66,6 +66,7 @@ export interface CommentNode {
   likesCount: number;
   dislikesCount: number;
   replyCount: number;
+  userReaction?: "like" | "dislike" | null;
   createdAt: string;
   updatedAt: string;
   author?: {

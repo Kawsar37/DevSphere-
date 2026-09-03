@@ -8,7 +8,7 @@ import { NotFoundError } from "../utils/errors.js";
 export class CommentController {
   public async getComments(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await commentService.getCommentsByPostId(req.params.postId);
+      const result = await commentService.getCommentsByPostId(req.params.postId, req.user?.id);
       sendSuccess(res, result, "Comments retrieved successfully", 200);
     } catch (error) {
       next(error);

@@ -9,6 +9,7 @@ export interface IPost extends Document {
   dislikesCount: number;
   commentCount: number;
   rankScore: number;
+  userReaction?: "like" | "dislike" | null;
   createdAt: Date;
   updatedAt: Date;
   calculateRankScore(): number;

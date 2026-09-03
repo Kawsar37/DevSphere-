@@ -5,6 +5,9 @@ import Link from "next/link";
 import { postsApi } from "@/services/posts.api";
 import { Post } from "@/types/api";
 import { ThreadTree } from "@/features/comments/ThreadTree";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/AuthContext";
+import { reactionsApi } from "@/services/reactions.api";
 import {
   ArrowLeft,
   Calendar,
@@ -22,12 +25,15 @@ interface PostDetailPageProps {
 }
 
 export default function PostDetailPage({ params }: PostDetailPageProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const resolvedParams = use(params);
   const { id } = resolvedParams;
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReacting, setIsReacting] = useState(false);
 
   useEffect(() => {
     async function loadPost() {
@@ -49,6 +55,99 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
 
     loadPost();
   }, [id]);
+
+  const handleReaction = async (reactionType: "like" | "dislike") => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (!post || isReacting) return;
+    setIsReacting(true);
+
+    const prevLikes = post.likesCount;
+    const prevDislikes = post.dislikesCount;
+    const prevReaction = post.userReaction;
+
+    let newLikes = prevLikes;
+    let newDislikes = prevDislikes;
+    let newReaction: "like" | "dislike" | null = null;
+
+    if (prevReaction === reactionType) {
+      // Toggle OFF
+      newReaction = null;
+      if (reactionType === "like") newLikes = Math.max(0, prevLikes - 1);
+      else newDislikes = Math.max(0, prevDislikes - 1);
+    } else if (prevReaction) {
+      // Flip
+      newReaction = reactionType;
+      if (reactionType === "like") {
+        newLikes = prevLikes + 1;
+        newDislikes = Math.max(0, prevDislikes - 1);
+      } else {
+        newLikes = Math.max(0, prevLikes - 1);
+        newDislikes = prevDislikes + 1;
+      }
+    } else {
+      // New
+      newReaction = reactionType;
+      if (reactionType === "like") newLikes = prevLikes + 1;
+      else newDislikes = prevDislikes + 1;
+    }
+
+    setPost((prev) =>
+      prev
+        ? {
+            ...prev,
+            likesCount: newLikes,
+            dislikesCount: newDislikes,
+            userReaction: newReaction,
+          }
+        : null
+    );
+
+    try {
+      const res = await reactionsApi.reactToPost(post._id, reactionType);
+      if (res.success && res.data) {
+        setPost((prev) =>
+          prev
+            ? {
+                ...prev,
+                likesCount: res.data!.likesCount,
+                dislikesCount: res.data!.dislikesCount,
+                userReaction: res.data!.userReaction,
+              }
+            : null
+        );
+      } else {
+        // Rollback
+        setPost((prev) =>
+          prev
+            ? {
+                ...prev,
+                likesCount: prevLikes,
+                dislikesCount: prevDislikes,
+                userReaction: prevReaction,
+              }
+            : null
+        );
+      }
+    } catch {
+      // Rollback
+      setPost((prev) =>
+        prev
+          ? {
+              ...prev,
+              likesCount: prevLikes,
+              dislikesCount: prevDislikes,
+              userReaction: prevReaction,
+            }
+          : null
+      );
+    } finally {
+      setIsReacting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -202,12 +301,28 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
         {/* Interaction Action Bar */}
         <div className="flex items-center justify-between pt-4 border-t border-outline-variant/30">
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high transition-colors font-mono text-xs font-semibold">
-              <ArrowUp className="w-4 h-4" />
+            <button
+              onClick={() => handleReaction("like")}
+              disabled={isReacting}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-semibold transition-all ${
+                post.userReaction === "like"
+                  ? "bg-primary text-on-primary shadow-sm"
+                  : "bg-surface-container text-primary hover:bg-surface-container-high"
+              }`}
+            >
+              <ArrowUp className={`w-4 h-4 ${post.userReaction === "like" ? "stroke-[2.5]" : ""}`} />
               <span>{post.likesCount} Upvotes</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-surface-container-low text-secondary transition-colors font-mono text-xs">
-              <ArrowDown className="w-4 h-4" />
+            <button
+              onClick={() => handleReaction("dislike")}
+              disabled={isReacting}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs transition-all ${
+                post.userReaction === "dislike"
+                  ? "bg-rose-100 text-rose-800 font-semibold shadow-sm"
+                  : "hover:bg-surface-container-low text-secondary hover:text-on-surface"
+              }`}
+            >
+              <ArrowDown className={`w-4 h-4 ${post.userReaction === "dislike" ? "stroke-[2.5]" : ""}`} />
               <span>{post.dislikesCount}</span>
             </button>
           </div>

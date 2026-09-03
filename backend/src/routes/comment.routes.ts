@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { commentController } from "../controllers/comment.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { reactionController } from "../controllers/reaction.controller.js";
+import { authenticate, optionalAuth } from "../middleware/auth.js";
 
 export const postCommentsRouter = Router({ mergeParams: true });
 export const commentRepliesRouter = Router();
@@ -55,7 +56,7 @@ export const commentRepliesRouter = Router();
  *       401:
  *         description: Unauthorized
  */
-postCommentsRouter.get("/:postId/comments", commentController.getComments);
+postCommentsRouter.get("/:postId/comments", optionalAuth, commentController.getComments);
 postCommentsRouter.post("/:postId/comments", authenticate, commentController.createRootComment);
 
 /**
@@ -97,3 +98,44 @@ postCommentsRouter.post("/:postId/comments", authenticate, commentController.cre
  *         description: Parent comment not found
  */
 commentRepliesRouter.post("/:commentId/replies", authenticate, commentController.createReply);
+
+/**
+ * @openapi
+ * /api/comments/{id}/reactions:
+ *   post:
+ *     summary: Toggle reaction (like/dislike) on a comment
+ *     tags:
+ *       - Reactions
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reactionType
+ *             properties:
+ *               reactionType:
+ *                 type: string
+ *                 enum: [like, dislike]
+ *                 example: like
+ *     responses:
+ *       200:
+ *         description: Reaction updated successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Comment not found
+ */
+commentRepliesRouter.post("/:id/reactions", authenticate, reactionController.reactToComment);
