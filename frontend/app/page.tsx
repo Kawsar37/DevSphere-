@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { postsApi } from "@/services/posts.api";
 import { Post } from "@/types/api";
 import { useAuth } from "@/features/auth/AuthContext";
@@ -16,10 +17,16 @@ import {
   Send,
   MessageSquare,
   AlertCircle,
-  Loader2,
+  Search,
+  X,
 } from "lucide-react";
 
-export default function HomePage() {
+function HomePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+  const tagQuery = searchParams.get("tag") || "";
+
   const { user, isAuthenticated } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [sort, setSort] = useState<"ranked" | "latest">("ranked");
@@ -31,7 +38,11 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await postsApi.getPosts({ sort });
+        const res = await postsApi.getPosts({
+          sort,
+          search: searchQuery || undefined,
+          tag: tagQuery || undefined,
+        });
         if (res.success && res.data) {
           setPosts(res.data.posts);
         } else {
@@ -45,10 +56,42 @@ export default function HomePage() {
     }
 
     loadFeed();
-  }, [sort]);
+  }, [sort, searchQuery, tagQuery]);
+
+  const clearSearchFilter = () => {
+    router.push("/");
+  };
 
   return (
     <div className="py-8 max-w-4xl mx-auto flex flex-col gap-6">
+      {/* Active Search / Tag Filter Banner */}
+      {(searchQuery || tagQuery) && (
+        <div className="bg-surface-container-low p-4 rounded-xl border border-primary/20 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-on-surface">
+            <Search className="w-4 h-4 text-primary shrink-0" />
+            <span>
+              {searchQuery && (
+                <>
+                  Search results for: <strong className="text-primary font-mono">&ldquo;{searchQuery}&rdquo;</strong>
+                </>
+              )}
+              {tagQuery && (
+                <>
+                  Filtered by topic: <strong className="text-primary font-mono">#{tagQuery}</strong>
+                </>
+              )}
+            </span>
+          </div>
+          <button
+            onClick={clearSearchFilter}
+            className="flex items-center gap-1 text-xs font-mono text-secondary hover:text-on-surface bg-surface-container hover:bg-surface-container-high px-2.5 py-1 rounded-lg transition-colors border border-outline-variant/30"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Clear Filter</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm">
         <div>
@@ -195,17 +238,30 @@ export default function HomePage() {
           <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary mb-1">
             <MessageSquare className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-semibold text-on-surface">No posts yet</h3>
+          <h3 className="text-base font-semibold text-on-surface">
+            {searchQuery || tagQuery ? "No matching posts found" : "No posts yet"}
+          </h3>
           <p className="text-xs text-secondary max-w-sm">
-            Be the first to share an architecture decision, technical query, or engineering article!
+            {searchQuery || tagQuery
+              ? `No discussions matched "${searchQuery || tagQuery}". Try another keyword or clear the filter.`
+              : "Be the first to share an architecture decision, technical query, or engineering article!"}
           </p>
-          <Link
-            href="/posts/new"
-            className="mt-2 px-4 py-2 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create First Post</span>
-          </Link>
+          {searchQuery || tagQuery ? (
+            <button
+              onClick={clearSearchFilter}
+              className="mt-2 px-4 py-2 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-sm"
+            >
+              Clear Filter
+            </button>
+          ) : (
+            <Link
+              href="/posts/new"
+              className="mt-2 px-4 py-2 bg-primary text-on-primary text-xs font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create First Post</span>
+            </Link>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -213,11 +269,19 @@ export default function HomePage() {
             <PostCard
               key={post._id}
               post={post}
-              rankIndex={sort === "ranked" ? idx : undefined}
+              rankIndex={sort === "ranked" && !searchQuery && !tagQuery ? idx : undefined}
             />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-secondary font-mono text-xs">Loading feed...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }

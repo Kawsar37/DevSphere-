@@ -19,6 +19,7 @@ export interface IUser extends Document {
   avatarUrl?: string;
   skills: string[];
   experiences: IExperience[];
+  savedPostIds: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -73,6 +74,10 @@ const UserSchema = new Schema<IUser>(
     },
     experiences: {
       type: [ExperienceSchema],
+      default: [],
+    },
+    savedPostIds: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Post" }],
       default: [],
     },
   },

@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import { Post } from "@/types/api";
 import { useAuth } from "@/features/auth/AuthContext";
 import { reactionsApi } from "@/services/reactions.api";
+import { postsApi } from "@/services/posts.api";
 import {
   Flame,
   ArrowUp,
   ArrowDown,
   MessageSquare,
   Bookmark,
+  Share2,
+  Check,
   MoreHorizontal,
   Eye,
 } from "lucide-react";
@@ -31,6 +34,9 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
     post.userReaction || null
   );
   const [isReacting, setIsReacting] = useState(false);
+  const [isSaved, setIsSaved] = useState<boolean>(post.isSaved || false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Format relative timestamp
   const formatTimeAgo = (dateStr: string) => {
@@ -59,18 +65,15 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
     if (isReacting) return;
     setIsReacting(true);
 
-    // Optimistic calculation
     const prevLikes = likesCount;
     const prevDislikes = dislikesCount;
     const prevReaction = userReaction;
 
     if (prevReaction === reactionType) {
-      // Toggle OFF
       setUserReaction(null);
       if (reactionType === "like") setLikesCount(Math.max(0, prevLikes - 1));
       else setDislikesCount(Math.max(0, prevDislikes - 1));
     } else if (prevReaction) {
-      // Flip
       setUserReaction(reactionType);
       if (reactionType === "like") {
         setLikesCount(prevLikes + 1);
@@ -80,7 +83,6 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
         setDislikesCount(prevDislikes + 1);
       }
     } else {
-      // New
       setUserReaction(reactionType);
       if (reactionType === "like") setLikesCount(prevLikes + 1);
       else setDislikesCount(prevDislikes + 1);
@@ -93,18 +95,52 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
         setDislikesCount(res.data.dislikesCount);
         setUserReaction(res.data.userReaction);
       } else {
-        // Rollback
         setLikesCount(prevLikes);
         setDislikesCount(prevDislikes);
         setUserReaction(prevReaction);
       }
     } catch {
-      // Rollback
       setLikesCount(prevLikes);
       setDislikesCount(prevDislikes);
       setUserReaction(prevReaction);
     } finally {
       setIsReacting(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (isSaving) return;
+    setIsSaving(true);
+    const nextSaved = !isSaved;
+    setIsSaved(nextSaved);
+
+    try {
+      const res = await postsApi.toggleSavePost(post._id);
+      if (res.success && res.data) {
+        setIsSaved(res.data.saved);
+      } else {
+        setIsSaved(!nextSaved);
+      }
+    } catch {
+      setIsSaved(!nextSaved);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const url = `${window.location.origin}/posts/${post._id}`;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
     }
   };
 
@@ -181,12 +217,13 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
       {post.tags && post.tags.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
           {post.tags.map((tag, idx) => (
-            <span
+            <Link
               key={idx}
-              className="font-mono text-xs px-2.5 py-1 bg-surface-container-low text-on-surface-variant rounded-md hover:bg-surface-container cursor-pointer transition-colors font-medium border border-outline-variant/30"
+              href={`/?tag=${encodeURIComponent(tag)}`}
+              className="font-mono text-xs px-2.5 py-1 bg-surface-container-low text-on-surface-variant rounded-md hover:bg-surface-container hover:text-primary cursor-pointer transition-colors font-medium border border-outline-variant/30"
             >
-              {tag}
-            </span>
+              #{tag}
+            </Link>
           ))}
         </div>
       )}
@@ -233,12 +270,38 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
             <span>{post.commentCount} comments</span>
           </Link>
 
+          {/* Save / Bookmark Button */}
           <button
-            aria-label="Save post"
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
+            onClick={handleToggleSave}
+            disabled={isSaving}
+            aria-label={isSaved ? "Remove from bookmarks" : "Save post"}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
+              isSaved
+                ? "bg-primary/10 text-primary font-medium"
+                : "hover:bg-surface-container-low text-secondary hover:text-on-surface"
+            }`}
           >
-            <Bookmark className="w-3.5 h-3.5" />
-            <span>Save</span>
+            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : ""}`} />
+            <span>{isSaved ? "Saved" : "Save"}</span>
+          </button>
+
+          {/* Share Link Button */}
+          <button
+            onClick={handleShare}
+            aria-label="Share post link"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-tertiary" />
+                <span className="text-tertiary font-medium">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share</span>
+              </>
+            )}
           </button>
         </div>
 

@@ -32,6 +32,29 @@ export class PostController {
       next(error);
     }
   }
+
+  public async toggleSavePost(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await postService.toggleSavePost(req.user!.id, req.params.id);
+      sendSuccess(
+        res,
+        result,
+        result.saved ? "Post saved to bookmarks" : "Post removed from bookmarks",
+        200
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async getSavedPosts(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const posts = await postService.getSavedPosts(req.user!.id);
+      sendSuccess(res, { posts }, "Saved posts retrieved successfully", 200);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const postController = new PostController();

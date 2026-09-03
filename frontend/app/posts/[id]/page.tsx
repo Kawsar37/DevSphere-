@@ -16,6 +16,7 @@ import {
   ArrowDown,
   Bookmark,
   Share2,
+  Check,
   MessageSquare,
   AlertCircle,
 } from "lucide-react";
@@ -34,6 +35,43 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isReacting, setIsReacting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleToggleSave = async () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if (!post || isSaving) return;
+
+    setIsSaving(true);
+    const nextSaved = !post.isSaved;
+    setPost({ ...post, isSaved: nextSaved });
+
+    try {
+      const res = await postsApi.toggleSavePost(post._id);
+      if (res.success && res.data) {
+        setPost((prev) => (prev ? { ...prev, isSaved: res.data!.saved } : null));
+      } else {
+        setPost((prev) => (prev ? { ...prev, isSaved: !nextSaved } : null));
+      }
+    } catch {
+      setPost((prev) => (prev ? { ...prev, isSaved: !nextSaved } : null));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
 
   useEffect(() => {
     async function loadPost() {
@@ -259,17 +297,34 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
 
           <div className="flex items-center gap-2">
             <button
-              aria-label="Save post"
-              className="h-8 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-mono text-xs rounded-lg flex items-center gap-1.5 transition-colors border border-outline-variant/30"
+              onClick={handleToggleSave}
+              disabled={isSaving}
+              aria-label={post.isSaved ? "Remove from bookmarks" : "Save post"}
+              className={`h-8 px-3 font-mono text-xs rounded-lg flex items-center gap-1.5 transition-colors border ${
+                post.isSaved
+                  ? "bg-primary/10 border-primary/30 text-primary font-medium"
+                  : "bg-surface-container-low hover:bg-surface-container text-secondary hover:text-on-surface border-outline-variant/30"
+              }`}
             >
-              <Bookmark className="w-3.5 h-3.5" />
-              <span>Save</span>
+              <Bookmark className={`w-3.5 h-3.5 ${post.isSaved ? "fill-primary text-primary" : ""}`} />
+              <span>{post.isSaved ? "Saved" : "Save"}</span>
             </button>
             <button
-              aria-label="Share post"
-              className="h-8 w-8 flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant/30"
+              onClick={handleShare}
+              aria-label="Share post link"
+              className="h-8 px-3 flex items-center gap-1.5 text-secondary hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant/30 text-xs font-mono"
             >
-              <Share2 className="w-3.5 h-3.5" />
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-tertiary" />
+                  <span className="text-tertiary font-medium">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
+                </>
+              )}
             </button>
           </div>
         </div>

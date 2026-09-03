@@ -77,6 +77,8 @@ const router = Router();
  */
 router.post("/", authenticate, postController.createPost);
 router.get("/", optionalAuth, postController.getPosts);
+router.get("/saved", authenticate, postController.getSavedPosts);
+router.post("/:id/save", authenticate, postController.toggleSavePost);
 
 /**
  * @openapi

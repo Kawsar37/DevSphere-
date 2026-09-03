@@ -10,6 +10,7 @@ export interface IPost extends Document {
   commentCount: number;
   rankScore: number;
   userReaction?: "like" | "dislike" | null;
+  isSaved?: boolean;
   createdAt: Date;
   updatedAt: Date;
   calculateRankScore(): number;

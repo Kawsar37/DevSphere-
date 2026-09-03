@@ -53,6 +53,7 @@ export interface Post {
   commentCount: number;
   rankScore: number;
   userReaction?: "like" | "dislike" | null;
+  isSaved?: boolean;
   createdAt: string;
   updatedAt: string;
 }

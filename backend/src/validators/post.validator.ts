@@ -19,6 +19,7 @@ export const createPostSchema = z.object({
 export const getPostsQuerySchema = z.object({
   sort: z.enum(["ranked", "latest"]).optional().default("ranked"),
   tag: z.string().optional(),
+  search: z.string().optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(50).optional().default(20),
 });

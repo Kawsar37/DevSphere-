@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   Settings,
   LogOut,
+  Bookmark,
   CheckCheck,
   MessageSquare,
   Flame,
@@ -32,6 +33,16 @@ export function Header() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push("/");
+    }
+  };
 
   const isHome = pathname === "/" || pathname.startsWith("/posts");
   const isExplore = pathname === "/explore";
@@ -158,19 +169,22 @@ export function Header() {
 
         {/* Middle: Search Bar (Desktop) */}
         <div className="flex-1 max-w-md mx-4 hidden sm:block">
-          <div className="relative flex items-center w-full">
+          <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full">
             <Search className="absolute left-3 w-4 h-4 text-outline pointer-events-none" />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search posts, skills, developers..."
               className="w-full h-[34px] pl-9 pr-14 bg-surface border border-outline-variant/60 text-sm text-on-surface placeholder:text-outline rounded-lg outline-none focus:border-primary focus:bg-surface-container-lowest transition-all"
             />
-            <div className="absolute right-2 flex items-center pointer-events-none">
-              <kbd className="font-mono text-[11px] text-secondary bg-surface-container-low border border-outline-variant/50 px-1.5 py-0.5 rounded">
-                ⌘K
-              </kbd>
-            </div>
-          </div>
+            <button
+              type="submit"
+              className="absolute right-2 flex items-center text-[11px] text-secondary hover:text-primary bg-surface-container-low border border-outline-variant/50 px-1.5 py-0.5 rounded font-mono transition-colors"
+            >
+              Enter ↵
+            </button>
+          </form>
         </div>
 
         {/* Right: Actions & User Session */}
@@ -358,6 +372,14 @@ export function Header() {
                   >
                     <Bell className="w-3.5 h-3.5 text-secondary" />
                     <span>Notifications</span>
+                  </Link>
+                  <Link
+                    href="/saved"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors"
+                  >
+                    <Bookmark className="w-3.5 h-3.5 text-secondary" />
+                    <span>Saved Bookmarks</span>
                   </Link>
                   <div className="my-1 border-t border-outline-variant/30" />
                   <button

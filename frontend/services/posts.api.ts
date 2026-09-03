@@ -10,6 +10,7 @@ export interface CreatePostPayload {
 export interface GetPostsQuery {
   sort?: "ranked" | "latest";
   tag?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -33,6 +34,7 @@ export const postsApi = {
     const params = new URLSearchParams();
     if (query?.sort) params.set("sort", query.sort);
     if (query?.tag) params.set("tag", query.tag);
+    if (query?.search) params.set("search", query.search);
     if (query?.page) params.set("page", query.page.toString());
     if (query?.limit) params.set("limit", query.limit.toString());
 
@@ -44,5 +46,13 @@ export const postsApi = {
 
   async getPostById(id: string): Promise<ApiResponse<Post>> {
     return apiClient.get<Post>(`/posts/${id}`);
+  },
+
+  async toggleSavePost(id: string): Promise<ApiResponse<{ saved: boolean }>> {
+    return apiClient.post<{ saved: boolean }>(`/posts/${id}/save`);
+  },
+
+  async getSavedPosts(): Promise<ApiResponse<{ posts: Post[] }>> {
+    return apiClient.get<{ posts: Post[] }>("/posts/saved");
   },
 };
