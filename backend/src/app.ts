@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { ENV } from "./config/env.js";
 import healthRouter from "./routes/health.routes.js";
+import authRouter from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { setupSwagger } from "./docs/swagger.js";
 import { sendError } from "./utils/response.js";
@@ -23,6 +24,7 @@ setupSwagger(app);
 
 // API Routes
 app.use("/api", healthRouter);
+app.use("/api/auth", authRouter);
 
 // Root route redirect/info
 app.get("/", (req, res) => {

@@ -33,6 +33,19 @@ This document provides a transparent, chronological record of the agentic AI wor
   * Configured Express backend with TypeScript, Mongoose connection with resilient automatic fallback to `mongodb-memory-server` in development mode, Zod error handling, standardized response envelope (`{ success, data, message }` / `{ success, statusCode, message, errors }`), and OpenAPI / Swagger documentation at `/api-docs`.
   * Configured Next.js 15 frontend with App Router, Tailwind CSS (configured with exact Stitch Precision Slate Minimal theme tokens), Geist Sans and JetBrains Mono typography, centralized `apiClient`, and responsive layout shell with sticky navigation header.
   * Verified end-to-end connectivity: Frontend `HomePage` pinging `GET /api/health` returning `{ success: true, data: { status: "ok", database: "connected" } }`.
+  * Committed and pushed to GitHub remote `origin/main`.
+
+### Step 3: Phase 2 (Authentication & Session)
+* **Tasks Executed**:
+  * Built `User` Mongoose model with subdocuments for experience, password comparison method with bcrypt, and sanitized JSON serialization (excluding `passwordHash`).
+  * Created Zod validation schemas for registration (`registerSchema`) and login (`loginSchema`).
+  * Built `AuthService` handling duplicate email conflicts (409), password hashing (cost factor 10), JWT token issuance, credential verification, and user profile retrieval.
+  * Implemented JWT middleware (`authenticate` & `optionalAuth`) attaching decoded claims to `req.user`.
+  * Built `AuthController` and registered endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`.
+  * Documented all auth endpoints in Swagger/OpenAPI.
+  * Tested registration, duplicate email rejection (409), invalid credentials (401), and token-authorized `/me` endpoint with PowerShell integration tests.
+  * Built frontend auth services (`auth.api.ts`), persistent session provider (`AuthContext`), Stitch-themed `/login` and `/register` pages, and responsive `Header` user profile dropdown with sign-out.
+  * Verified frontend typecheck and production build with Next.js 15.
 
 ---
 
@@ -40,6 +53,7 @@ This document provides a transparent, chronological record of the agentic AI wor
 1. **Vertical Slice Execution Order**: Phase 1 Foundation $\rightarrow$ Phase 2 Authentication $\rightarrow$ Phase 3 Profiles $\rightarrow$ Phase 4 Ranked Feed $\rightarrow$ Phase 5 Threaded Comments $\rightarrow$ Phase 6 Reactions $\rightarrow$ Phase 7 Docs & Polish.
 2. **Standardized Response Envelope**: Enforced uniform JSON payload structure across all endpoints to eliminate ad-hoc response parsing on the client.
 3. **Resilient Local Database Strategy**: Integrated `mongodb-memory-server` as a development fallback so that the backend starts immediately even if the developer's local MongoDB service is offline, while honoring `MONGODB_URI` when provided.
+4. **Session Persistence**: Stored auth tokens securely in client-side storage, with transparent verification against `GET /api/auth/me` on application boot.
 
 ---
 
@@ -48,3 +62,5 @@ This document provides a transparent, chronological record of the agentic AI wor
   * **Fix**: Implemented a graceful catch block in `backend/src/config/db.ts` that dynamically launches an in-memory MongoDB 7.0 daemon for zero-friction local development while logging clear diagnostic information.
 * **Issue**: PowerShell `curl` command resolution on Windows.
   * **Fix**: Used explicit `curl.exe` with structured JSON parsing to test endpoints reliably across environments.
+* **Issue**: Next.js detected parent directory lockfiles during production build.
+  * **Fix**: Explicitly configured `outputFileTracingRoot: path.join(__dirname, "./")` in `frontend/next.config.ts`.
