@@ -4,7 +4,55 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthContext";
-import { Code2, Mail, Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Code2,
+  Mail,
+  Lock,
+  ArrowRight,
+  AlertCircle,
+  Loader2,
+  Sparkles,
+  UserCheck,
+} from "lucide-react";
+
+interface DemoAccount {
+  name: string;
+  role: string;
+  email: string;
+  password: string;
+  badge: string;
+}
+
+const DEMO_ACCOUNTS: DemoAccount[] = [
+  {
+    name: "Alex Rivera",
+    role: "Staff Infrastructure Engineer",
+    email: "alex.rivera@devsphere.io",
+    password: "Password123!",
+    badge: "Platform Staff",
+  },
+  {
+    name: "Marcus Vance",
+    role: "Principal Systems Architect @ Netflix",
+    email: "marcus@netflix.com",
+    password: "DevSphere2026!",
+    badge: "Architect",
+  },
+  {
+    name: "Elena Rostova",
+    role: "Senior Database Architect",
+    email: "elena@prisma.io",
+    password: "DevSphere2026!",
+    badge: "Databases",
+  },
+  {
+    name: "Sarah Lin",
+    role: "Kernel & eBPF Specialist",
+    email: "sarah@datadog.com",
+    password: "DevSphere2026!",
+    badge: "Systems",
+  },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +62,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [autoLoggingIn, setAutoLoggingIn] = useState<string | null>(null);
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -22,8 +71,8 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setError(null);
 
     if (!email.trim() || !password) {
@@ -46,8 +95,28 @@ export default function LoginPage() {
     }
   };
 
+  const handleQuickDemoLogin = async (acc: DemoAccount) => {
+    setEmail(acc.email);
+    setPassword(acc.password);
+    setError(null);
+    setAutoLoggingIn(acc.email);
+
+    try {
+      const result = await login({ email: acc.email, password: acc.password });
+      if (result.success) {
+        router.push("/");
+      } else {
+        setError(result.error || "Demo login failed.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with demo account.");
+    } finally {
+      setAutoLoggingIn(null);
+    }
+  };
+
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-12 px-4 sm:px-6">
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-10 px-4 sm:px-6">
       <div className="w-full max-w-md bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/50 shadow-sm flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-2">
@@ -62,6 +131,47 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* 1-Click Demo Credentials Box */}
+        <div className="p-3.5 bg-surface-container-low rounded-xl border border-outline-variant/40 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-on-surface">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>Instant 1-Click Demo Accounts</span>
+            </div>
+            <span className="text-[10px] font-mono text-outline">Click to test</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => handleQuickDemoLogin(acc)}
+                disabled={submitting || autoLoggingIn !== null}
+                className="p-2.5 bg-surface hover:bg-surface-container border border-outline-variant/50 hover:border-primary/50 rounded-lg text-left transition-all flex flex-col gap-0.5 group disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-xs text-on-surface group-hover:text-primary transition-colors truncate">
+                    {acc.name}
+                  </span>
+                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-surface-container-high text-primary">
+                    {acc.badge}
+                  </span>
+                </div>
+                <span className="text-[10px] text-secondary truncate">{acc.role}</span>
+                <span className="text-[10px] font-mono text-outline truncate mt-0.5 flex items-center gap-1">
+                  {autoLoggingIn === acc.email ? (
+                    <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
+                  ) : (
+                    <UserCheck className="w-2.5 h-2.5 text-secondary" />
+                  )}
+                  {acc.email}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Error Alert */}
         {error && (
           <div className="p-3 bg-red-50 border border-error/20 rounded-lg flex items-start gap-2.5 text-xs text-error">
@@ -69,6 +179,14 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center">
+          <div className="w-full border-t border-outline-variant/30" />
+          <span className="absolute bg-surface-container-lowest px-2.5 text-[11px] font-mono text-outline uppercase tracking-wider">
+            Or use email & password
+          </span>
+        </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -112,7 +230,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || autoLoggingIn !== null}
             className="w-full h-10 mt-2 bg-primary hover:bg-primary-hover text-on-primary font-medium text-sm rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? (

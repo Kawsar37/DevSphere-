@@ -19,6 +19,10 @@ import {
   Check,
   MessageSquare,
   AlertCircle,
+  MoreHorizontal,
+  Copy,
+  Flag,
+  Trash2,
 } from "lucide-react";
 
 interface PostDetailPageProps {
@@ -27,7 +31,7 @@ interface PostDetailPageProps {
 
 export default function PostDetailPage({ params }: PostDetailPageProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const resolvedParams = use(params);
   const { id } = resolvedParams;
 
@@ -37,6 +41,23 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
   const [isReacting, setIsReacting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOptionsMenuOpen(false);
+      }
+    };
+    if (optionsMenuOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [optionsMenuOpen]);
 
   const handleToggleSave = async () => {
     if (!isAuthenticated) {
@@ -253,30 +274,30 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
       <article className="bg-surface-container-lowest p-4 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-5 sm:gap-6">
         {/* Author Header */}
         <div className="flex items-start sm:items-center justify-between gap-3 sm:gap-4 flex-wrap pb-4 border-b border-outline-variant/30">
-          <div className="flex items-center gap-3.5">
-            <Link href={`/developers/${post.authorId}`}>
+          <div className="flex items-center gap-3.5 min-w-0">
+            <Link href={`/developers/${post.authorId}`} className="shrink-0 block rounded-full">
               {post.author?.avatarUrl ? (
                 <img
                   src={post.author.avatarUrl}
                   alt={authorName}
-                  className="w-11 h-11 rounded-full object-cover border border-outline-variant/40"
+                  className="w-11 h-11 rounded-full object-cover border border-outline-variant/40 shrink-0 aspect-square"
                 />
               ) : (
-                <div className="w-11 h-11 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-sm font-semibold">
+                <div className="w-11 h-11 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-sm font-semibold shrink-0 aspect-square">
                   {authorName.charAt(0).toUpperCase()}
                 </div>
               )}
             </Link>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/developers/${post.authorId}`}
-                  className="font-semibold text-sm text-on-surface hover:text-primary transition-colors"
+                  className="font-semibold text-sm text-on-surface hover:text-primary transition-colors truncate"
                 >
                   {authorName}
                 </Link>
-                <span className="font-mono text-xs text-secondary">@{handle}</span>
+                <span className="font-mono text-xs text-secondary truncate">@{handle}</span>
                 <span className="inline-flex items-center px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-mono text-[11px]">
                   {role}
                 </span>
@@ -295,7 +316,7 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleToggleSave}
               disabled={isSaving}
@@ -307,8 +328,9 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
               }`}
             >
               <Bookmark className={`w-3.5 h-3.5 ${post.isSaved ? "fill-primary text-primary" : ""}`} />
-              <span>{post.isSaved ? "Saved" : "Save"}</span>
+              <span className="hidden sm:inline">{post.isSaved ? "Saved" : "Save"}</span>
             </button>
+
             <button
               onClick={handleShare}
               aria-label="Share post link"
@@ -322,10 +344,95 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
               ) : (
                 <>
                   <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
+                  <span className="hidden sm:inline">Share</span>
                 </>
               )}
             </button>
+
+            {/* 3-Dots More Options Menu */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setOptionsMenuOpen((prev) => !prev)}
+                aria-label="More options"
+                className="h-8 w-8 flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors border border-outline-variant/30"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+
+              {optionsMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-1 w-48 bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-100"
+                >
+                  <button
+                    onClick={() => {
+                      handleShare();
+                      setTimeout(() => setOptionsMenuOpen(false), 1200);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-tertiary" /> : <Copy className="w-3.5 h-3.5 text-secondary" />}
+                    <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleToggleSave();
+                      setOptionsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                  >
+                    <Bookmark className={`w-3.5 h-3.5 ${post.isSaved ? "fill-primary text-primary" : "text-secondary"}`} />
+                    <span>{post.isSaved ? "Remove Bookmark" : "Save Bookmark"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setReported(true);
+                      setTimeout(() => {
+                        setOptionsMenuOpen(false);
+                        setReported(false);
+                      }, 1500);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors text-left"
+                  >
+                    <Flag className="w-3.5 h-3.5 text-secondary" />
+                    <span>{reported ? "Reported to Mods" : "Report Post"}</span>
+                  </button>
+
+                  {/* Delete Post (Only for the Author) */}
+                  {user && (user._id === post.authorId || (user as any).id === post.authorId) && (
+                    <>
+                      <div className="my-1 border-t border-outline-variant/30" />
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm("Are you sure you want to delete this post?")) return;
+                          setIsDeleting(true);
+                          try {
+                            const res = await postsApi.deletePost(post._id);
+                            if (res.success) {
+                              router.push("/");
+                            } else {
+                              alert(res.message || "Failed to delete post.");
+                            }
+                          } catch (err: any) {
+                            alert(err.message || "An error occurred.");
+                          } finally {
+                            setIsDeleting(false);
+                            setOptionsMenuOpen(false);
+                          }
+                        }}
+                        disabled={isDeleting}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{isDeleting ? "Deleting..." : "Delete Post"}</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
