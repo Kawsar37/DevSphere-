@@ -250,9 +250,9 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
       </div>
 
       {/* 2. Main Post Card */}
-      <article className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-6">
+      <article className="bg-surface-container-lowest p-4 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm flex flex-col gap-5 sm:gap-6">
         {/* Author Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-outline-variant/30">
+        <div className="flex items-start sm:items-center justify-between gap-3 sm:gap-4 flex-wrap pb-4 border-b border-outline-variant/30">
           <div className="flex items-center gap-3.5">
             <Link href={`/developers/${post.authorId}`}>
               {post.author?.avatarUrl ? (

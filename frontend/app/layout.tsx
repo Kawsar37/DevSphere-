@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Header />
-          <main className="pt-16 min-h-[calc(100vh-4rem)] max-w-7xl mx-auto px-4 sm:px-6">
+          <main className="pt-16 pb-20 md:pb-8 min-h-[calc(100vh-4rem)] max-w-7xl mx-auto px-4 sm:px-6">
             {children}
           </main>
         </AuthProvider>

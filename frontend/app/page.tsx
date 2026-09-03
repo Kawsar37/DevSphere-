@@ -63,13 +63,13 @@ function HomePageContent() {
   };
 
   return (
-    <div className="py-8 max-w-4xl mx-auto flex flex-col gap-6">
+    <div className="py-4 sm:py-8 max-w-4xl mx-auto flex flex-col gap-4 sm:gap-6">
       {/* Active Search / Tag Filter Banner */}
       {(searchQuery || tagQuery) && (
-        <div className="bg-surface-container-low p-4 rounded-xl border border-primary/20 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-on-surface">
+        <div className="bg-surface-container-low p-3.5 sm:p-4 rounded-xl border border-primary/20 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-on-surface min-w-0">
             <Search className="w-4 h-4 text-primary shrink-0" />
-            <span>
+            <span className="truncate">
               {searchQuery && (
                 <>
                   Search results for: <strong className="text-primary font-mono">&ldquo;{searchQuery}&rdquo;</strong>
@@ -84,16 +84,16 @@ function HomePageContent() {
           </div>
           <button
             onClick={clearSearchFilter}
-            className="flex items-center gap-1 text-xs font-mono text-secondary hover:text-on-surface bg-surface-container hover:bg-surface-container-high px-2.5 py-1 rounded-lg transition-colors border border-outline-variant/30"
+            className="flex items-center gap-1 text-xs font-mono text-secondary hover:text-on-surface bg-surface-container hover:bg-surface-container-high px-2.5 py-1 rounded-lg transition-colors border border-outline-variant/30 shrink-0"
           >
             <X className="w-3.5 h-3.5" />
-            <span>Clear Filter</span>
+            <span>Clear</span>
           </button>
         </div>
       )}
 
       {/* 1. Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 bg-surface-container-lowest p-6 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 bg-surface-container-lowest p-4 sm:p-8 rounded-xl border border-outline-variant/40 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container text-primary font-medium tracking-wide uppercase">

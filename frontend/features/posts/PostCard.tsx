@@ -156,52 +156,51 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
   return (
     <article
       onClick={handleCardClick}
-      className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/40 shadow-sm hover:shadow-md hover:border-primary/40 transition-all relative flex flex-col gap-4 cursor-pointer group/card"
+      className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl border border-outline-variant/40 shadow-sm hover:shadow-md hover:border-primary/40 transition-all relative flex flex-col gap-3.5 sm:gap-4 cursor-pointer group/card"
     >
       {/* Top Author & Rank Metadata */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <Link href={`/developers/${post.authorId}`} className="shrink-0 group">
             {post.author?.avatarUrl ? (
               <img
                 src={post.author.avatarUrl}
                 alt={authorName}
-                className="w-10 h-10 rounded-full object-cover border border-outline-variant/40 group-hover:ring-2 group-hover:ring-primary/40 transition-all"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-outline-variant/40 group-hover:ring-2 group-hover:ring-primary/40 transition-all"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-sm font-semibold group-hover:bg-primary transition-colors">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-xs sm:text-sm font-semibold group-hover:bg-primary transition-colors">
                 {authorName.charAt(0).toUpperCase()}
               </div>
             )}
           </Link>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/developers/${post.authorId}`}
-                className="font-semibold text-sm text-on-surface hover:text-primary transition-colors"
+                className="font-semibold text-xs sm:text-sm text-on-surface hover:text-primary transition-colors truncate"
               >
                 {authorName}
               </Link>
-              <span className="font-mono text-xs text-secondary">@{handle}</span>
-              <span className="text-outline text-xs">•</span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary font-mono text-[11px] font-medium">
+              <span className="font-mono text-[11px] sm:text-xs text-secondary truncate">@{handle}</span>
+              <span className="hidden sm:inline text-outline text-xs">•</span>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-primary font-mono text-[11px] font-medium">
                 {role}
               </span>
             </div>
-            <span className="font-mono text-[11px] text-outline mt-0.5">
+            <span className="font-mono text-[10px] sm:text-[11px] text-outline mt-0.5">
               {formatTimeAgo(post.createdAt)} • Community Post
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {rankIndex !== undefined && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-primary font-mono text-xs font-semibold">
-              <Flame className="w-3.5 h-3.5 text-primary" />
-              <span>
-                Rank #{rankIndex + 1} • Score {post.rankScore}
-              </span>
+            <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-container text-primary font-mono text-[11px] sm:text-xs font-semibold">
+              <Flame className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="hidden md:inline">Rank #{rankIndex + 1} • </span>
+              <span>Score {post.rankScore}</span>
             </span>
           )}
           <button
@@ -215,10 +214,10 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
 
       {/* Post Content Preview */}
       <div>
-        <h2 className="text-lg font-semibold text-on-surface group-hover/card:text-primary transition-colors leading-snug tracking-tight">
+        <h2 className="text-base sm:text-lg font-semibold text-on-surface group-hover/card:text-primary transition-colors leading-snug tracking-tight">
           {post.title}
         </h2>
-        <p className="text-sm text-secondary mt-1.5 line-clamp-2 leading-relaxed">
+        <p className="text-xs sm:text-sm text-secondary mt-1 sm:mt-1.5 line-clamp-2 leading-relaxed">
           {post.body.replace(/[#*`_]/g, "")}
         </p>
       </div>
@@ -230,7 +229,7 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
             <Link
               key={idx}
               href={`/?tag=${encodeURIComponent(tag)}`}
-              className="font-mono text-xs px-2.5 py-1 bg-surface-container-low text-on-surface-variant rounded-md hover:bg-surface-container hover:text-primary cursor-pointer transition-colors font-medium border border-outline-variant/30"
+              className="font-mono text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 bg-surface-container-low text-on-surface-variant rounded-md hover:bg-surface-container hover:text-primary cursor-pointer transition-colors font-medium border border-outline-variant/30"
             >
               #{tag}
             </Link>
@@ -239,13 +238,13 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
       )}
 
       {/* Interaction Bar */}
-      <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30 text-xs">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pt-2.5 sm:pt-3 border-t border-outline-variant/30 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Upvote Button */}
           <button
             onClick={() => handleReaction("like")}
             disabled={isReacting}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg font-mono text-xs font-semibold transition-all ${
               userReaction === "like"
                 ? "bg-primary text-on-primary shadow-sm"
                 : "bg-surface-container text-primary hover:bg-surface-container-high"
@@ -259,7 +258,7 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
           <button
             onClick={() => handleReaction("dislike")}
             disabled={isReacting}
-            className={`flex items-center gap-1 px-2 py-1 rounded-lg font-mono text-xs transition-all ${
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg font-mono text-xs transition-all ${
               userReaction === "dislike"
                 ? "bg-rose-100 text-rose-800 font-semibold shadow-sm"
                 : "hover:bg-surface-container-low text-secondary hover:text-on-surface"
@@ -269,15 +268,18 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
             <span>{dislikesCount}</span>
           </button>
 
-          <div className="h-3.5 w-px bg-outline-variant/40 mx-1" />
+          <div className="h-3.5 w-px bg-outline-variant/40 mx-0.5 sm:mx-1" />
 
           {/* Comments Count */}
           <Link
             href={`/posts/${post._id}`}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>{post.commentCount} comments</span>
+            <span>
+              {post.commentCount}
+              <span className="hidden sm:inline"> comments</span>
+            </span>
           </Link>
 
           {/* Save / Bookmark Button */}
@@ -285,21 +287,21 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
             onClick={handleToggleSave}
             disabled={isSaving}
             aria-label={isSaved ? "Remove from bookmarks" : "Save post"}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
+            className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg transition-colors ${
               isSaved
                 ? "bg-primary/10 text-primary font-medium"
                 : "hover:bg-surface-container-low text-secondary hover:text-on-surface"
             }`}
           >
             <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : ""}`} />
-            <span>{isSaved ? "Saved" : "Save"}</span>
+            <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>
           </button>
 
           {/* Share Link Button */}
           <button
             onClick={handleShare}
             aria-label="Share post link"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg hover:bg-surface-container-low text-secondary hover:text-on-surface transition-colors"
           >
             {copied ? (
               <>
@@ -309,13 +311,13 @@ export function PostCard({ post, rankIndex }: PostCardProps) {
             ) : (
               <>
                 <Share2 className="w-3.5 h-3.5" />
-                <span>Share</span>
+                <span className="hidden sm:inline">Share</span>
               </>
             )}
           </button>
         </div>
 
-        <div className="flex items-center gap-1 text-outline font-mono text-[11px]">
+        <div className="hidden sm:flex items-center gap-1 text-outline font-mono text-[11px]">
           <Eye className="w-3.5 h-3.5" />
           <span>Active</span>
         </div>
